@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish
+        run: |
+          dotnet publish -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=false `
+            -o ./publish
+
+      - name: Zip release
+        run: Compress-Archive -Path ./publish/* -DestinationPath ./WifiQrScanner.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: WiFi QR Scanner ${{ github.ref_name }}
+          body: |
+            ## Install
+
+            **Option 1 — One-liner (recommended)**
+            Open PowerShell as Administrator and run:
+            ````powershell
+            irm https://raw.githubusercontent.com/${{ github.repository }}/main/install.ps1 | iex
+            ````
+
+            **Option 2 — Manual**
+            Download `WifiQrScanner.zip`, extract anywhere, run `WifiQrScanner.exe`.
+          files: WifiQrScanner.zip
+          draft: false
+          prerelease: false
