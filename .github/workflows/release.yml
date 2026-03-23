@@ -48,7 +48,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Path ./msix-stage -Force
           Copy-Item -Recurse ./publish/* ./msix-stage/
-          Copy-Item Package.appxmanifest ./msix-stage/
+          Copy-Item Package.appxmanifest ./msix-stage/AppxManifest.xml
           New-Item -ItemType Directory -Path ./msix-stage/Assets -Force
           Copy-Item Assets\*.png ./msix-stage/Assets/
 
