@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Windows.Networking.Connectivity;
 using WifiQrScanner.Models;
 
 namespace WifiQrScanner.Services;
@@ -10,14 +9,49 @@ public static class CurrentNetworkService
 {
     public static CurrentNetwork? GetCurrentNetwork()
     {
-        var profile = NetworkInformation.GetInternetConnectionProfile();
-        var ssid = profile?.WlanConnectionProfileDetails?.GetConnectedSsid();
+        var ssid = TryGetConnectedSsid();
         if (string.IsNullOrEmpty(ssid)) return null;
 
         var password = TryGetPassword(ssid);
         var secType = string.IsNullOrEmpty(password) ? WifiSecurityType.Open : WifiSecurityType.WPA2;
 
         return new CurrentNetwork(ssid, password ?? "", secType);
+    }
+
+    private static string? TryGetConnectedSsid()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "netsh",
+                Arguments = "wlan show interfaces",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            using var process = Process.Start(psi)!;
+            var output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+
+            foreach (var line in output.Split('\n'))
+            {
+                var trimmed = line.Trim();
+                // "SSID" line but not "BSSID"
+                if (trimmed.StartsWith("SSID", StringComparison.OrdinalIgnoreCase) &&
+                    !trimmed.StartsWith("BSSID", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parts = trimmed.Split(':', 2);
+                    if (parts.Length == 2)
+                    {
+                        var ssid = parts[1].Trim();
+                        return string.IsNullOrEmpty(ssid) ? null : ssid;
+                    }
+                }
+            }
+        }
+        catch { }
+        return null;
     }
 
     private static string? TryGetPassword(string ssid)
