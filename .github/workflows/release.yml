@@ -59,7 +59,29 @@ jobs:
                    Sort-Object FullName -Descending |
                    Select-Object -First 1 -ExpandProperty FullName
           & $sdk pack /d ./msix-stage /p WifiQrScanner.msix /nv
-          Write-Host "MSIX created: $(Test-Path WifiQrScanner.msix)"
+
+      - name: Sign MSIX
+        run: |
+          # Generate a self-signed cert matching the Store publisher identity.
+          # Microsoft re-signs the package during certification — this cert is just
+          # required to satisfy the MSIX signing requirement for upload.
+          $publisher = "CN=607692FF-94E1-4964-80CA-A77E2F2FBCFF"
+          $cert = New-SelfSignedCertificate `
+            -Type Custom `
+            -Subject $publisher `
+            -KeyUsage DigitalSignature `
+            -FriendlyName "WifiQrScanner" `
+            -CertStoreLocation "Cert:\CurrentUser\My" `
+            -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3","2.5.29.19={text}")
+          $pwd = ConvertTo-SecureString -String "ci" -Force -AsPlainText
+          Export-PfxCertificate -Cert $cert -FilePath sign.pfx -Password $pwd
+
+          $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter "signtool.exe" |
+                        Where-Object { $_.FullName -match 'x64' } |
+                        Sort-Object FullName -Descending |
+                        Select-Object -First 1 -ExpandProperty FullName
+          & $signtool sign /fd SHA256 /f sign.pfx /p "ci" WifiQrScanner.msix
+          Write-Host "Signed: $(Test-Path WifiQrScanner.msix)"
 
       - name: Zip release
         run: Compress-Archive -Path ./publish/* -DestinationPath ./WifiQrScanner.zip

@@ -4,13 +4,13 @@
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
          IgnorableNamespaces="uap rescap">
 
-  <Identity Name="MaxKramer.WiFiQRScanner"
-            Publisher="CN=PLACEHOLDER"
+  <Identity Name="mkster.WiFiQRScannerShare"
+            Publisher="CN=607692FF-94E1-4964-80CA-A77E2F2FBCFF"
             Version="1.0.0.0"/>
 
   <Properties>
-    <DisplayName>WiFi QR Scanner</DisplayName>
-    <PublisherDisplayName>Max Kramer</PublisherDisplayName>
+    <DisplayName>WiFi QR Scanner &amp; Share</DisplayName>
+    <PublisherDisplayName>mkster</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -28,7 +28,7 @@
     <Application Id="App"
                  Executable="WifiQrScanner.exe"
                  EntryPoint="Windows.FullTrustApplication">
-      <uap:VisualElements DisplayName="WiFi QR Scanner"
+      <uap:VisualElements DisplayName="WiFi QR Scanner &amp; Share"
                           Description="Scan a WiFi QR code and connect instantly."
                           BackgroundColor="transparent"
                           Square150x150Logo="Assets\Square150x150Logo.png"
