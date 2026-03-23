@@ -41,8 +41,8 @@ jobs:
           while ($parts.Count -lt 4) { $parts += '0' }
           $fullVer = $parts -join '.'
           $content = [System.IO.File]::ReadAllText("Package.appxmanifest")
-          # Case-sensitive replace so we don't touch version="1.0" in the XML declaration
-          $content = [regex]::Replace($content, 'Version="[^"]*"', "Version=`"$fullVer`"")
+          # Only replace Version= inside the <Identity> element to avoid clobbering MinVersion/MaxVersionTested
+          $content = [regex]::Replace($content, '(<Identity\b[^>]*\bVersion=")[^"]*(")', "`${1}$fullVer`${2}")
           $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
           [System.IO.File]::WriteAllText((Resolve-Path "Package.appxmanifest").Path, $content, $utf8NoBom)
 

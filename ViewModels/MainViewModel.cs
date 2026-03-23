@@ -17,6 +17,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private readonly WifiConnectionService _wifi = new();
     private CancellationTokenSource? _connectCts;
     private int _framePending; // 1 = UI thread already has a frame queued
+    private readonly Windows.Networking.Connectivity.NetworkStatusChangedEventHandler _networkStatusChanged;
 
     // ── Bindable Properties ────────────────────────────────────────────────
 
@@ -79,16 +80,38 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
         _camera.Start();
 
-        Task.Run(() =>
+        _networkStatusChanged = _ => RefreshCurrentNetwork();
+        Windows.Networking.Connectivity.NetworkInformation.NetworkStatusChanged += _networkStatusChanged;
+        RefreshCurrentNetwork();
+    }
+
+    private void RefreshCurrentNetwork()
+    {
+        Task.Run(async () =>
         {
             var network = CurrentNetworkService.GetCurrentNetwork();
-            if (network == null) return;
+
+            // WinRT network APIs can briefly return null at startup — retry once
+            if (network == null)
+            {
+                await Task.Delay(2000);
+                network = CurrentNetworkService.GetCurrentNetwork();
+            }
 
             Application.Current.Dispatcher.BeginInvoke(() =>
             {
-                CurrentNetworkSsid = network.Ssid;
-                SharePassword = network.Password;
-                HasCurrentNetwork = true;
+                if (network != null)
+                {
+                    CurrentNetworkSsid = network.Ssid;
+                    SharePassword = network.Password;
+                    HasCurrentNetwork = true;
+                }
+                else
+                {
+                    HasCurrentNetwork = false;
+                    CurrentNetworkSsid = "";
+                    SharePassword = "";
+                }
             });
         });
     }
@@ -215,6 +238,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void Dispose()
     {
+        Windows.Networking.Connectivity.NetworkInformation.NetworkStatusChanged -= _networkStatusChanged;
         _connectCts?.Cancel();
         _camera.Dispose();
     }
