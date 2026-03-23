@@ -37,12 +37,13 @@ jobs:
       - name: Set MSIX version in manifest
         run: |
           $ver = "${{ steps.version.outputs.number }}"
-          # Pad to 4 parts (e.g. 1.2.0 -> 1.2.0.0)
           $parts = $ver.Split('.')
           while ($parts.Count -lt 4) { $parts += '0' }
           $fullVer = $parts -join '.'
-          (Get-Content Package.appxmanifest) -replace 'Version="[^"]*"', "Version=`"$fullVer`"" |
-            Set-Content Package.appxmanifest
+          $content = [System.IO.File]::ReadAllText("Package.appxmanifest")
+          $content = $content -replace 'Version="[^"]*"', "Version=`"$fullVer`""
+          $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+          [System.IO.File]::WriteAllText((Resolve-Path "Package.appxmanifest").Path, $content, $utf8NoBom)
 
       - name: Stage MSIX package
         run: |
