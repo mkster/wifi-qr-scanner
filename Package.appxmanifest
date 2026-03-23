@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
          xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
-         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-         IgnorableNamespaces="uap rescap">
+         IgnorableNamespaces="uap">
 
   <Identity Name="mkster.WiFiQRScannerShare"
             Publisher="CN=607692FF-94E1-4964-80CA-A77E2F2FBCFF"
@@ -44,7 +43,6 @@
 
   <Capabilities>
     <DeviceCapability Name="webcam"/>
-    <rescap:Capability Name="wifiControl"/>
   </Capabilities>
 
 </Package>
