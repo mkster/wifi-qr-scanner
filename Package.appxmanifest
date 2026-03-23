@@ -43,8 +43,8 @@
   </Applications>
 
   <Capabilities>
-    <uap:Capability Name="webcam"/>
-    <DeviceCapability Name="wifiControl"/>
+    <DeviceCapability Name="webcam"/>
+    <rescap:Capability Name="wifiControl"/>
   </Capabilities>
 
 </Package>
