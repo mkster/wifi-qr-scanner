@@ -42,19 +42,19 @@ public class CameraService : IDisposable
 
     private void CaptureLoop(int cameraIndex)
     {
-        _capture = new VideoCapture(cameraIndex, VideoCaptureAPIs.ANY);
-        _capture.Set(VideoCaptureProperties.FrameWidth, 1280);
-        _capture.Set(VideoCaptureProperties.FrameHeight, 720);
-        _capture.Set(VideoCaptureProperties.Fps, 30);
-
-        if (!_capture.IsOpened())
+        var task = Task.Run(() => new VideoCapture(cameraIndex, VideoCaptureAPIs.ANY));
+        if (!task.Wait(TimeSpan.FromSeconds(8)) || !task.Result.IsOpened())
         {
-            _capture.Dispose();
-            _capture = null;
+            if (task.IsCompleted) task.Result.Dispose();
             _running = false;
             CameraReady?.Invoke(false);
             return;
         }
+
+        _capture = task.Result;
+        _capture.Set(VideoCaptureProperties.FrameWidth, 1280);
+        _capture.Set(VideoCaptureProperties.FrameHeight, 720);
+        _capture.Set(VideoCaptureProperties.Fps, 30);
 
         CameraReady?.Invoke(true);
 

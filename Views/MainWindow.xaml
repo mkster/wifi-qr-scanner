@@ -50,6 +50,25 @@ Title="WiFi QR Scanner"
             </Setter>
         </Style>
 
+        <Style x:Key="BarePasswordBox" TargetType="PasswordBox">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground"      Value="#F2F2F2"/>
+            <Setter Property="FontFamily"      Value="Segoe UI"/>
+            <Setter Property="FontSize"        Value="12"/>
+            <Setter Property="Padding"         Value="8,6"/>
+            <Setter Property="CaretBrush"      Value="#F2F2F2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      Margin="{TemplateBinding Padding}"
+                                      Background="Transparent"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="PillButton" TargetType="Button">
             <Setter Property="Background"      Value="#1F2937"/>
             <Setter Property="Foreground"      Value="#F2F2F2"/>
@@ -88,14 +107,18 @@ Title="WiFi QR Scanner"
 
         <!-- ── Camera Feed ───────────────────────────────────────── -->
         <Grid Grid.Row="0" Background="#050505">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
             <!-- Live frame -->
-            <Image x:Name="CameraImage"
+            <Image x:Name="CameraImage" Grid.Column="0"
                    Stretch="UniformToFill"
                    RenderOptions.BitmapScalingMode="LowQuality"/>
 
             <!-- Scan guide brackets (idle only — shown via code-behind) -->
-            <Border x:Name="ScanGuide"
+            <Border x:Name="ScanGuide" Grid.Column="0"
                     Width="200" Height="200"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
                     IsHitTestVisible="False">
@@ -112,7 +135,7 @@ Title="WiFi QR Scanner"
             </Border>
 
             <!-- Camera loading overlay -->
-            <Border x:Name="LoadingPanel"
+            <Border x:Name="LoadingPanel" Grid.Column="0"
                     Background="#0F0F0F"
                     Visibility="Visible">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -154,18 +177,105 @@ Title="WiFi QR Scanner"
             </Border>
 
             <!-- No camera message -->
-            <StackPanel x:Name="NoCameraPanel"
+            <StackPanel x:Name="NoCameraPanel" Grid.Column="0"
                         HorizontalAlignment="Center" VerticalAlignment="Center"
                         Visibility="Collapsed">
                 <TextBlock Text="⚠" FontSize="44" Foreground="#EF4444"
                            HorizontalAlignment="Center"/>
-                <TextBlock Text="No camera detected"
+                <TextBlock x:Name="NoCameraTitle"
+                           Text="Camera unavailable"
                            FontSize="18" Foreground="#F2F2F2" FontFamily="Segoe UI"
                            Margin="0,12,0,0" HorizontalAlignment="Center"/>
-                <TextBlock Text="Connect a webcam and restart the app"
+                <TextBlock x:Name="NoCameraDetail"
+                           Text="No webcam detected, or camera access is blocked."
                            FontSize="13" Foreground="#6B7280" FontFamily="Segoe UI"
                            Margin="0,6,0,0" HorizontalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
+                    <Button x:Name="OpenCameraSettingsBtn"
+                            Content="Open Camera Settings"
+                            Style="{StaticResource PillButton}"
+                            Margin="0,0,8,0"
+                            Click="OpenCameraSettings_Click"/>
+                    <Button x:Name="RetryCameraBtn"
+                            Content="Retry"
+                            Style="{StaticResource PillButton}"
+                            Click="RetryCamera_Click"/>
+                </StackPanel>
             </StackPanel>
+
+            <!-- Share panel -->
+            <Border x:Name="SharePanel"
+                    Grid.Column="1"
+                    Width="220"
+                    Background="#0A0A0A"
+                    BorderBrush="#222222" BorderThickness="1,0,0,0"
+                    Visibility="Collapsed">
+                <StackPanel Margin="16,20,16,16">
+                    <TextBlock Text="SHARE WIFI"
+                               FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold"
+                               Foreground="#4B5563"
+                               Margin="0,0,0,14"/>
+
+                    <Border Background="#141414" CornerRadius="8" Padding="4">
+                        <Image x:Name="ShareQrImage"
+                               Width="180" Height="180"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                    </Border>
+
+                    <TextBlock x:Name="ShareSsidText"
+                               FontFamily="Segoe UI" FontSize="14" FontWeight="SemiBold"
+                               Foreground="#F2F2F2"
+                               Margin="0,12,0,0"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"/>
+
+                    <TextBlock Text="PASSWORD"
+                               FontFamily="Segoe UI" FontSize="10" FontWeight="SemiBold"
+                               Foreground="#4B5563"
+                               Margin="0,14,0,5"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Background="#141414" CornerRadius="6"
+                                BorderBrush="#2E2E2E" BorderThickness="1">
+                            <TextBox x:Name="SharePasswordBox"
+                                     FontFamily="Segoe UI" FontSize="12"
+                                     Foreground="#F2F2F2" Background="Transparent"
+                                     BorderThickness="0" Padding="8,6"
+                                     CaretBrush="#F2F2F2"
+                                     IsReadOnly="True"
+                                     TextChanged="SharePassword_Changed"/>
+                        </Border>
+                        <Button x:Name="ShareTogglePasswordBtn"
+                                Grid.Column="1"
+                                Content="&#xE7B3;"
+                                Style="{StaticResource IconButton}"
+                                Margin="6,0,0,0"
+                                VerticalAlignment="Center"
+                                Click="ShareTogglePassword_Click">
+                            <Button.ToolTip>
+                                <ToolTip Content="Show password" Background="#1F2937" Foreground="#F2F2F2"
+                                         BorderBrush="#2E2E2E" FontFamily="Segoe UI" FontSize="12"/>
+                            </Button.ToolTip>
+                        </Button>
+                        <Button x:Name="ShareCopyPasswordBtn"
+                                Grid.Column="2"
+                                Content="&#xE8C8;"
+                                Style="{StaticResource IconButton}"
+                                Margin="4,0,0,0"
+                                VerticalAlignment="Center"
+                                Click="ShareCopyPassword_Click">
+                            <Button.ToolTip>
+                                <ToolTip Content="Copy password" Background="#1F2937" Foreground="#F2F2F2"
+                                         BorderBrush="#2E2E2E" FontFamily="Segoe UI" FontSize="12"/>
+                            </Button.ToolTip>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
 
         </Grid>
 
@@ -174,6 +284,7 @@ Title="WiFi QR Scanner"
                 Background="#141414"
                 BorderBrush="#222222"
                 BorderThickness="0,1,0,0"
+                Height="96"
                 Padding="24,16,24,18">
             <Grid>
                 <Grid.ColumnDefinitions>

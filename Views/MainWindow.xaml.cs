@@ -12,6 +12,7 @@ public partial class MainWindow : Window
 {
     private MainViewModel? _vm;
     private bool _passwordVisible = false;
+    private bool _sharePasswordVisible = false;
 
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
@@ -54,6 +55,24 @@ public partial class MainWindow : Window
 
             case nameof(_vm.IsLoading):
                 if (!_vm.IsLoading) FadeOutLoading();
+                break;
+
+            case nameof(_vm.HasCurrentNetwork):
+                SharePanel.Visibility = _vm.HasCurrentNetwork ? Visibility.Visible : Visibility.Collapsed;
+                break;
+
+            case nameof(_vm.CurrentNetworkSsid):
+                ShareSsidText.Text = _vm.CurrentNetworkSsid;
+                break;
+
+            case nameof(_vm.SharePassword):
+                SharePasswordBox.Text = _sharePasswordVisible
+                    ? _vm.SharePassword
+                    : new string('•', _vm.SharePassword.Length);
+                break;
+
+            case nameof(_vm.ShareQrBitmap):
+                ShareQrImage.Source = _vm.ShareQrBitmap;
                 break;
 
             case nameof(_vm.NoCameraFound):
@@ -176,6 +195,61 @@ public partial class MainWindow : Window
         ScanGuide.Visibility = Visibility.Visible;
         NetworkInfoRow.Visibility = Visibility.Collapsed;
         _vm.RetryScanning();
+    }
+
+    private void SharePassword_Changed(object sender, System.Windows.Controls.TextChangedEventArgs e) { }
+
+    private void ShareTogglePassword_Click(object sender, RoutedEventArgs e)
+    {
+        _sharePasswordVisible = !_sharePasswordVisible;
+        if (_sharePasswordVisible)
+        {
+            SharePasswordBox.Text = _vm?.SharePassword ?? "";
+            ShareTogglePasswordBtn.Content = "\uED1A";
+            ((System.Windows.Controls.ToolTip)ShareTogglePasswordBtn.ToolTip).Content = "Hide password";
+        }
+        else
+        {
+            SharePasswordBox.Text = new string('•', _vm?.SharePassword.Length ?? 0);
+            ShareTogglePasswordBtn.Content = "\uE7B3";
+            ((System.Windows.Controls.ToolTip)ShareTogglePasswordBtn.ToolTip).Content = "Show password";
+        }
+    }
+
+    private void ShareCopyPassword_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm == null || string.IsNullOrEmpty(_vm.SharePassword)) return;
+        Clipboard.SetText(_vm.SharePassword);
+
+        ShareCopyPasswordBtn.Content = "\uE73E";
+        ShareCopyPasswordBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
+        var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };
+        timer.Tick += (_, _) =>
+        {
+            ShareCopyPasswordBtn.Content = "\uE8C8";
+            ShareCopyPasswordBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x9C, 0xA3, 0xAF));
+            timer.Stop();
+        };
+        timer.Start();
+    }
+
+    private void OpenCameraSettings_Click(object sender, RoutedEventArgs e)
+    {
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "ms-settings:privacy-webcam",
+            UseShellExecute = true
+        });
+    }
+
+    private void RetryCamera_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm == null) return;
+        NoCameraPanel.Visibility = Visibility.Collapsed;
+        LoadingPanel.Opacity = 1;
+        LoadingPanel.Visibility = Visibility.Visible;
+        ScanGuide.Visibility = Visibility.Visible;
+        _vm.RetryCamera();
     }
 
     private void Window_Closing(object sender, CancelEventArgs e)

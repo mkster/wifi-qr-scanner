@@ -21,11 +21,45 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Publish
+      - name: Extract version from tag
+        id: version
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $ver = $tag.TrimStart('v')
+          echo "number=$ver" >> $env:GITHUB_OUTPUT
+
+      - name: Publish app
         run: |
           dotnet publish -c Release -r win-x64 --self-contained true `
             -p:PublishSingleFile=false `
             -o ./publish
+
+      - name: Set MSIX version in manifest
+        run: |
+          $ver = "${{ steps.version.outputs.number }}"
+          # Pad to 4 parts (e.g. 1.2.0 -> 1.2.0.0)
+          $parts = $ver.Split('.')
+          while ($parts.Count -lt 4) { $parts += '0' }
+          $fullVer = $parts -join '.'
+          (Get-Content Package.appxmanifest) -replace 'Version="[^"]*"', "Version=`"$fullVer`"" |
+            Set-Content Package.appxmanifest
+
+      - name: Stage MSIX package
+        run: |
+          New-Item -ItemType Directory -Path ./msix-stage -Force
+          Copy-Item -Recurse ./publish/* ./msix-stage/
+          Copy-Item Package.appxmanifest ./msix-stage/
+          New-Item -ItemType Directory -Path ./msix-stage/Assets -Force
+          Copy-Item Assets\*.png ./msix-stage/Assets/
+
+      - name: Build MSIX
+        run: |
+          $sdk = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter "makeappx.exe" |
+                   Where-Object { $_.FullName -match 'x64' } |
+                   Sort-Object FullName -Descending |
+                   Select-Object -First 1 -ExpandProperty FullName
+          & $sdk pack /d ./msix-stage /p WifiQrScanner.msix /nv
+          Write-Host "MSIX created: $(Test-Path WifiQrScanner.msix)"
 
       - name: Zip release
         run: Compress-Archive -Path ./publish/* -DestinationPath ./WifiQrScanner.zip
@@ -45,6 +79,11 @@ jobs:
 
             **Option 2 — Manual**
             Download `WifiQrScanner.zip`, extract anywhere, run `WifiQrScanner.exe`.
-          files: WifiQrScanner.zip
+
+            **Option 3 — Microsoft Store**
+            Coming soon.
+          files: |
+            WifiQrScanner.zip
+            WifiQrScanner.msix
           draft: false
           prerelease: false

@@ -47,6 +47,28 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _isLoading = true;
     public bool IsLoading { get => _isLoading; private set => Set(ref _isLoading, value); }
 
+    private bool _hasCurrentNetwork;
+    public bool HasCurrentNetwork { get => _hasCurrentNetwork; private set => Set(ref _hasCurrentNetwork, value); }
+
+    private string _currentNetworkSsid = "";
+    public string CurrentNetworkSsid { get => _currentNetworkSsid; private set => Set(ref _currentNetworkSsid, value); }
+
+    private string _sharePassword = "";
+    public string SharePassword
+    {
+        get => _sharePassword;
+        set
+        {
+            if (_sharePassword == value) return;
+            _sharePassword = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SharePassword)));
+            UpdateShareQr();
+        }
+    }
+
+    private WriteableBitmap? _shareQrBitmap;
+    public WriteableBitmap? ShareQrBitmap { get => _shareQrBitmap; private set => Set(ref _shareQrBitmap, value); }
+
     // ── Init ───────────────────────────────────────────────────────────────
 
     public MainViewModel()
@@ -55,8 +77,29 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _camera.FrameReady += OnFrameReady;
         _camera.CameraReady += OnCameraReady;
 
-        // Returns immediately — camera opens on background thread
         _camera.Start();
+
+        Task.Run(() =>
+        {
+            var network = CurrentNetworkService.GetCurrentNetwork();
+            if (network == null) return;
+
+            Application.Current.Dispatcher.BeginInvoke(() =>
+            {
+                CurrentNetworkSsid = network.Ssid;
+                SharePassword = network.Password;
+                HasCurrentNetwork = true;
+            });
+        });
+    }
+
+    private void UpdateShareQr()
+    {
+        if (string.IsNullOrEmpty(CurrentNetworkSsid)) return;
+        var secType = string.IsNullOrEmpty(_sharePassword)
+            ? WifiSecurityType.Open
+            : WifiSecurityType.WPA2;
+        ShareQrBitmap = QrGeneratorService.Generate(CurrentNetworkSsid, _sharePassword, secType);
     }
 
     // ── Camera Ready ──────────────────────────────────────────────────────
@@ -66,6 +109,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         if (!success)
             Application.Current.Dispatcher.BeginInvoke(() =>
             {
+                IsLoading = false;
                 NoCameraFound = true;
                 StatusText = "No camera found. Check your device.";
             });
@@ -138,6 +182,13 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
                     break;
             }
         });
+    }
+
+    public void RetryCamera()
+    {
+        NoCameraFound = false;
+        IsLoading = true;
+        _camera.Start();
     }
 
     public void RetryScanning()
