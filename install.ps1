@@ -25,7 +25,7 @@ if (-not $isAdmin) {
         Write-Host "  Right-click the Start button → 'Terminal (Admin)' or 'Windows PowerShell (Admin)'" -ForegroundColor Yellow
         Write-Host "  Then paste the install command again." -ForegroundColor Yellow
         Write-Host ""
-        exit 1
+        return
     }
 }
 
