@@ -62,6 +62,7 @@ $lnk.Save()
 Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
 
 Write-Host ""
-Write-Host "  Installed $version successfully." -ForegroundColor Green
-Write-Host "  Search 'WiFi QR Scanner' in the Start Menu to launch." -ForegroundColor Green
+Write-Host "  Installed $version successfully. Launching..." -ForegroundColor Green
 Write-Host ""
+
+Start-Process "$InstallDir\WifiQrScanner.exe"
