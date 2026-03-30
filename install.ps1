@@ -10,11 +10,23 @@ param(
 $ErrorActionPreference = "Stop"
 
 # ── Elevation check ────────────────────────────────────────────────────────────
-if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
-        [Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Host "Relaunching as Administrator..." -ForegroundColor Yellow
-    Start-Process powershell "-ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
-    exit
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+    [Security.Principal.WindowsBuiltInRole]::Administrator)
+
+if (-not $isAdmin) {
+    if ($PSCommandPath) {
+        # Running from a file — relaunch elevated
+        Start-Process powershell "-ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+        exit
+    } else {
+        # Running via irm | iex — can't relaunch, ask user to open admin shell
+        Write-Host ""
+        Write-Host "  Please run this in an Administrator PowerShell window:" -ForegroundColor Red
+        Write-Host "  Right-click the Start button → 'Terminal (Admin)' or 'Windows PowerShell (Admin)'" -ForegroundColor Yellow
+        Write-Host "  Then paste the install command again." -ForegroundColor Yellow
+        Write-Host ""
+        exit 1
+    }
 }
 
 Write-Host ""
