@@ -233,6 +233,23 @@ public partial class MainWindow : Window
         timer.Start();
     }
 
+    private void CopyDiagnostics_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm == null || string.IsNullOrEmpty(_vm.DiagnosticsText)) return;
+        Clipboard.SetText(_vm.DiagnosticsText);
+
+        CopyDiagnosticsBtn.Content = "Copied!";
+        CopyDiagnosticsBtn.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
+        var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        timer.Tick += (_, _) =>
+        {
+            CopyDiagnosticsBtn.Content = "Copy Diagnostics";
+            CopyDiagnosticsBtn.Foreground = new SolidColorBrush(Color.FromRgb(0xF2, 0xF2, 0xF2));
+            timer.Stop();
+        };
+        timer.Start();
+    }
+
     private void OpenCameraSettings_Click(object sender, RoutedEventArgs e)
     {
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo

@@ -6,7 +6,7 @@
 
   <Identity Name="mkster.WiFiQRScannerShare"
             Publisher="CN=607692FF-94E1-4964-80CA-A77E2F2FBCFF"
-            Version="1.0.0.0"/>
+            Version="1.1.16.0"/>
 
   <Properties>
     <DisplayName>WiFi QR Scanner &amp; Share</DisplayName>

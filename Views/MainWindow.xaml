@@ -187,9 +187,10 @@ Title="WiFi QR Scanner &amp; Share"
                            FontSize="18" Foreground="#F2F2F2" FontFamily="Segoe UI"
                            Margin="0,12,0,0" HorizontalAlignment="Center"/>
                 <TextBlock x:Name="NoCameraDetail"
-                           Text="No webcam detected, or camera access is blocked."
+                           Text="{Binding NoCameraDetailText}"
                            FontSize="13" Foreground="#6B7280" FontFamily="Segoe UI"
-                           Margin="0,6,0,0" HorizontalAlignment="Center"/>
+                           Margin="0,6,0,0" HorizontalAlignment="Center"
+                           MaxWidth="400" TextWrapping="Wrap" TextAlignment="Center"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
                     <Button x:Name="OpenCameraSettingsBtn"
                             Content="Open Camera Settings"
@@ -199,7 +200,12 @@ Title="WiFi QR Scanner &amp; Share"
                     <Button x:Name="RetryCameraBtn"
                             Content="Retry"
                             Style="{StaticResource PillButton}"
+                            Margin="0,0,8,0"
                             Click="RetryCamera_Click"/>
+                    <Button x:Name="CopyDiagnosticsBtn"
+                            Content="Copy Diagnostics"
+                            Style="{StaticResource PillButton}"
+                            Click="CopyDiagnostics_Click"/>
                 </StackPanel>
             </StackPanel>
 

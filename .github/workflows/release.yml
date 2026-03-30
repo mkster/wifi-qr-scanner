@@ -30,8 +30,9 @@ jobs:
 
       - name: Publish app
         run: |
-          dotnet publish -c Release -r win-x64 --self-contained true `
+          dotnet publish -c Release -r win-x64 --no-self-contained `
             -p:PublishSingleFile=false `
+            -p:DebugType=none -p:DebugSymbols=false `
             -o ./publish
 
       - name: Set MSIX version in manifest

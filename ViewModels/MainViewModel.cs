@@ -45,6 +45,12 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private bool _noCameraFound;
     public bool NoCameraFound { get => _noCameraFound; private set => Set(ref _noCameraFound, value); }
 
+    private string _noCameraDetailText = "";
+    public string NoCameraDetailText { get => _noCameraDetailText; private set => Set(ref _noCameraDetailText, value); }
+
+    private string _diagnosticsText = "";
+    public string DiagnosticsText { get => _diagnosticsText; private set => Set(ref _diagnosticsText, value); }
+
     private bool _isLoading = true;
     public bool IsLoading { get => _isLoading; private set => Set(ref _isLoading, value); }
 
@@ -127,13 +133,15 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     // ── Camera Ready ──────────────────────────────────────────────────────
 
-    private void OnCameraReady(bool success)
+    private void OnCameraReady(string? errorDetail, string diagnostics)
     {
-        if (!success)
+        if (errorDetail != null)
             Application.Current.Dispatcher.BeginInvoke(() =>
             {
                 IsLoading = false;
                 NoCameraFound = true;
+                NoCameraDetailText = errorDetail;
+                DiagnosticsText = diagnostics;
                 StatusText = "No camera found. Check your device.";
             });
     }
@@ -210,6 +218,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public void RetryCamera()
     {
         NoCameraFound = false;
+        NoCameraDetailText = "";
+        DiagnosticsText = "";
         IsLoading = true;
         _camera.Start();
     }
